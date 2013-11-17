@@ -3,8 +3,8 @@
 An implementation of two factor authentication provided by Google Authenticator mobile app
 More info on the app: http://en.wikipedia.org/wiki/Google_Authenticator
 
-Allows to set up the app to work with your user accounts via manual input or QR code, and also to verify codes supplied by users.
-Both HOTP (incremented counter based) and TOTP (time based) authentication modes are supported.
+Allows to set up the app to work with your user accounts via manual input or QR code, and also to verify codes supplied
+by users. Both HOTP (incremented counter based) and TOTP (time based) authentication modes are supported.
 
 RFC4226 implementation code based on https://github.com/gingerlime/hotpie/blob/master/hotpie.py
 
@@ -13,14 +13,18 @@ Date:   2013-07-05
 
 Usage example:
 
-	import google_authenticator
-	
-    secret = google_authenticator.new_secret() # when a new user is registered or signed up for 2 factor authentication, returned value should be stored
-    url = google_authenticator.qr_url(google_authenticator.MODE_TOTP, secret, 'John Doe', 'Acme', 200) # build url for QR code image so user can set up their Google Authenticator
+    import google_authenticator
+
+    # when a new user is registered or signed up for 2 factor authentication, returned value should be stored
+    secret = google_authenticator.new_secret()
+
+    # build url for QR code image so user can set up their Google Authenticator
+    url = google_authenticator.qr_url(google_authenticator.MODE_TOTP, secret, 'John Doe', 'Acme', 200)
 
     # then on login attempt, where code is supposedly Google Authenticator code supplied by user
-    if google_authenticator.auth(google_authenticator.MODE_TOTP, secret, code):   # mode should be the same as supplied to qr_url above
-        your_login_func() # authentication successfull
+    # mode should be the same as supplied to qr_url above
+    if google_authenticator.auth(google_authenticator.MODE_TOTP, secret, code):
+        your_login_func() # authentication successful
 
 If run directly, module will unit test itself.
 
@@ -40,12 +44,13 @@ MODE_HOTP = 'hotp'  # changing part of the seed is going to be counter increment
 _modes = (MODE_TOTP, MODE_HOTP)
 
 _TOTP_PRECISION = 30    # length of the "one tick" interval (in which system produces the same code) for TOTP
-_SECRET_LENGTH  = 16    # length of the secret code required by Google Authenticator app
-_CODE_LENGTH    = 6     # length of codes produced by Google Authenticator app
+_SECRET_LENGTH = 16    # length of the secret code required by Google Authenticator app
+_CODE_LENGTH = 6     # length of codes produced by Google Authenticator app
+
 
 def new_secret():
     """Generates and returns a random secret key which should be used when a new user is created in the outside code and stored with it.
-    It is needes to initialise user's Google Authenticator app and then every time user needs to be authenticated.
+    It is needs to initialise user's Google Authenticator app and then every time user needs to be authenticated.
 
     As required by Google Authenticator app, the secret is generated 16 base32 alphabet characters long
 
@@ -54,7 +59,8 @@ def new_secret():
 
     return secret.decode()
 
-def qr_url(mode, secret, label_user, label_issuer = '', size = 100):
+
+def qr_url(mode, secret, label_user, label_issuer='', size=100):
     """"Returns URL to Google Chart API producing a QR code image to initialise user's Google Authenticator app
 
     :param mode:            authentication mode
@@ -73,7 +79,7 @@ def qr_url(mode, secret, label_user, label_issuer = '', size = 100):
     :type size:             positive integer
      
     """    
-    if (not(mode in _modes)):
+    if not(mode in _modes):
         raise ValueError('Invalid mode')
 
     if (len(label_user) == 0):
@@ -101,6 +107,7 @@ def qr_url(mode, secret, label_user, label_issuer = '', size = 100):
     """Google Chart instructions are ready, building the image request URL - it's https because sensitive information (secret) is supplied"""
     return 'https://chart.googleapis.com/chart?' + urlencode({'cht': 'qr', 'chs': size, 'chl': uri})
 
+
 def _truncate(hmac_sha1, digits = _CODE_LENGTH):
     """Converts an HMAC-SHA-1 value into an HOTP value as defined in Section 5.3.
     http://tools.ietf.org/html/rfc4226#section-5.3
@@ -111,19 +118,27 @@ def _truncate(hmac_sha1, digits = _CODE_LENGTH):
 
     return str(binary)[-digits:]
 
-def _code(secret, c, digits = _CODE_LENGTH):
+
+def _code(secret, c, digits=_CODE_LENGTH):
     """Returns HOTP code for the given secret part of the key and counter value
     To get TOTP code, supply timestamp divided by 30 sec as c
 
     """
-    secret_bytes = base64.b32decode(secret)     # this bit is often missed - secret is expected to be base32-encoded string, and should be decoded before hashing
-    c_bytes = struct.pack('>Q', c)              # converting a number into an array of bytes representing it as if it was 8 bytes long (same bits, different context)
-    hmac_sha1 = hmac.new(key=secret_bytes, msg=c_bytes, digestmod=hashlib.sha1).hexdigest()  # hashing binary secret and number
-    return _truncate(hmac_sha1, digits)     # converting hash to digits and cutting out the requested number of tralining ones (as they change most often)
+
+    # this bit is often missed - secret is expected to be base32-encoded string, and should be decoded before hashing
+    secret_bytes = base64.b32decode(secret)
+    # converting a number into an array of bytes representing it as if it was 8 bytes long (same bits, different context)
+    c_bytes = struct.pack('>Q', c)
+    # hashing binary secret and number
+    hmac_sha1 = hmac.new(key=secret_bytes, msg=c_bytes, digestmod=hashlib.sha1).hexdigest()
+
+    # converting hash to digits and cutting out the requested number of tralining ones (as they change most often)
+    return _truncate(hmac_sha1, digits)
+
 
 def auth(mode, secret, code, var = None, tolerance = 2):
     """Compares the code supplied by user with the expected, returns boolean value with the authentication result
-    *In HOTP mode, don't forget to increse your stored counter value var!* 
+    *In HOTP mode, don't forget to increase your stored counter value var!*
 
     :param mode:        authentication mode
     :type mode:         string, value should be either MODE_TOTP or MODE_HOTP
@@ -171,13 +186,15 @@ def auth(mode, secret, code, var = None, tolerance = 2):
         raise ValueError('Unsupported mode')
 
     for c in range(tolerance_from, (tolerance_to + 1)):
-        if (code == _code(secret, c)):
+        if code == _code(secret, c):
             return True
 
     return False
 
+
 import unittest
 from urllib.request import urlopen
+
 
 class ClientTest(unittest.TestCase):
     """Unit test for the functionality implemented in this module
@@ -207,25 +224,35 @@ class ClientTest(unittest.TestCase):
     def test_hotp(self):
         valid_codes = {1: '238295', 2: '821933', 3: '648071'}
         for c in valid_codes:
-            self.assertEqual(_code(self.secret, c), valid_codes[c])                     # checking if codes are equal
-            self.assertTrue(auth(MODE_HOTP, self.secret, valid_codes[c], c, 1))         # checking if tolerance works when the counter value is precise
+            # checking if codes are equal
+            self.assertEqual(_code(self.secret, c), valid_codes[c])
+            # checking if tolerance works when the counter value is precise
+            self.assertTrue(auth(MODE_HOTP, self.secret, valid_codes[c], c, 1))
 
-        self.assertTrue(auth(MODE_HOTP, self.secret, valid_codes[2], 1, 1))   # checking if tolerance works when the counter value is within tolerance
-        self.assertFalse(auth(MODE_HOTP, self.secret, valid_codes[3], 1, 1))  # checking if tolerance works when the counter value is outside of tolerance#
+        # checking if tolerance works when the counter value is within tolerance
+        self.assertTrue(auth(MODE_HOTP, self.secret, valid_codes[2], 1, 1))
+        # checking if tolerance works when the counter value is outside of tolerance#
+        self.assertFalse(auth(MODE_HOTP, self.secret, valid_codes[3], 1, 1))
 
-        self.assertFalse(auth(MODE_HOTP, self.secret, '123456', 1, 10))       # checking for failure on an invalid code with bigger tolerance
+        # checking for a failure on an invalid code with bigger tolerance
+        self.assertFalse(auth(MODE_HOTP, self.secret, '123456', 1, 10))
 
     def test_totp(self):
-        valid_codes = {1373197332 : '180958', 1373197362  : '944666', 1373197393 : '177781'}
+        valid_codes = {1373197332: '180958', 1373197362: '944666', 1373197393: '177781'}
         for ts in valid_codes:
             ticks = int(ts / _TOTP_PRECISION)
-            self.assertEqual(_code(self.secret, ticks), valid_codes[ts])                        # checking if codes are equal
-            self.assertTrue(auth(MODE_TOTP, self.secret, valid_codes[ts], ts, 1))               # checking if tolerance works when the counter value is precise
+            # checking if codes are equal
+            self.assertEqual(_code(self.secret, ticks), valid_codes[ts])
+            # checking if tolerance works when the counter value is precise
+            self.assertTrue(auth(MODE_TOTP, self.secret, valid_codes[ts], ts, 1))
 
-        self.assertTrue(auth(MODE_TOTP, self.secret, valid_codes[1373197362], 1373197332, 1))   # checking if tolerance works when the counter value is within tolerance
-        self.assertFalse(auth(MODE_TOTP, self.secret, valid_codes[1373197393], 1373197332, 1))  # checking if tolerance works when the counter value is outside of tolerance#
+        # checking if tolerance works when the counter value is within tolerance
+        self.assertTrue(auth(MODE_TOTP, self.secret, valid_codes[1373197362], 1373197332, 1))
+        # checking if tolerance works when the counter value is outside of tolerance#
+        self.assertFalse(auth(MODE_TOTP, self.secret, valid_codes[1373197393], 1373197332, 1))
 
-        self.assertFalse(auth(MODE_TOTP, self.secret, '123456', 1373197332, 10))       # checking for failure on an invalid code with bigger tolerance
+        # checking for failure on an invalid code with bigger tolerance
+        self.assertFalse(auth(MODE_TOTP, self.secret, '123456', 1373197332, 10))
 
         pass
 
