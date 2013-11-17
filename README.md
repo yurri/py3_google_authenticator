@@ -1,4 +1,4 @@
-A back-end module to use with Google Authenticator mobile app written in Python 3
+A back-end module to use with Google Authenticator mobile app, written in Python 3
 
 An implementation of two factor authentication provided by Google Authenticator mobile app.
 More info on the app: http://en.wikipedia.org/wiki/Google_Authenticator
@@ -23,6 +23,6 @@ Usage example:
     # then on login attempt, where code is supposedly Google Authenticator code supplied by user
 	# mode should be the same as supplied to qr_url above
     if google_authenticator.auth(google_authenticator.MODE_TOTP, secret, code):
-        your_login_func() # authentication successfull
+        your_login_func() # authentication successful
 
 If run directly, module will unit test itself.

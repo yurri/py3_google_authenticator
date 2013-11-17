@@ -1,4 +1,4 @@
-"""A back-end module to use with Google Authenticator mobile app written in Python 3
+"""A back-end module to use with Google Authenticator mobile app, written in Python 3
 
 An implementation of two factor authentication provided by Google Authenticator mobile app
 More info on the app: http://en.wikipedia.org/wiki/Google_Authenticator
